@@ -228,15 +228,20 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
     private void loadDummySongs() {
         String path1 = "D:\\Music\\SoundHelix-Song-1.mp3";
         String path2 = "D:\\Music\\Multo.mp3";
+        String path3 = "D:\\Music\\Lany.mp3";
         
         Song song1 = createSongFromMetadata(path1);
         Song song2 = createSongFromMetadata(path2);
+        Song song3 = createSongFromMetadata(path3);
         
         if (song1 != null) {
             songList.add(song1);
         }
         if (song2 != null) {
             songList.add(song2);
+        }
+        if (song3 != null) {
+            songList.add(song3);
         }
         
         for(Song song : songList) {
