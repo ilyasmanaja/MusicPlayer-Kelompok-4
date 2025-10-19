@@ -51,6 +51,11 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
     private ImageIcon iconPrev;
     private ImageIcon iconVolume;
     private ImageIcon iconDefaultAlbum;
+    private ImageIcon iconSongs;
+    private ImageIcon iconArtist;
+    private ImageIcon iconAlbumCategory;
+    private ImageIcon iconPlaylist;
+    
     
     
     private MusicPlayerEngine playerEngine;
@@ -73,9 +78,7 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         topBarPanel.setPreferredSize(new Dimension(getWidth(), 50));
         add(topBarPanel, BorderLayout.NORTH);
         
-        leftSidebarPanel = new JPanel();
-        leftSidebarPanel.setPreferredSize(new Dimension(180, getHeight()));
-        add(leftSidebarPanel, BorderLayout.WEST);
+        initLeftSidebarPanel();
         
         initSongListPanel();
         initPlayerControlsPanel();
@@ -102,8 +105,53 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         iconNext = loadAndScaleIcon("/icons/next.png", iconSize, iconSize);
         iconPrev = loadAndScaleIcon("/icons/prev.png", iconSize, iconSize);
         iconVolume = loadAndScaleIcon("/icons/volume.png", iconSize, iconSize);
+        iconSongs = loadAndScaleIcon("/icons/songs.png", iconSize, iconSize);
+        iconArtist = loadAndScaleIcon("/icons/artist category.png", iconSize, iconSize);
+        iconAlbumCategory = loadAndScaleIcon("/icons/album.png", iconSize, iconSize);
+        iconPlaylist = loadAndScaleIcon("/icons/playlist.png", iconSize, iconSize);
         
-        iconDefaultAlbum = loadAndScaleIcon("/icons/music.png", 64, 64);
+        
+        iconDefaultAlbum = loadAndScaleIcon("/icons/artist.png", 60, 60);
+    }
+    
+    private void initLeftSidebarPanel() {
+        leftSidebarPanel = new JPanel();
+        
+        leftSidebarPanel.setLayout(new BoxLayout(leftSidebarPanel, BoxLayout.Y_AXIS));
+        leftSidebarPanel.setPreferredSize(new Dimension(180, getHeight()));
+        
+        leftSidebarPanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 10, 10));
+        
+        String[] iconPaths = {"/icons/songs.png", "/icons/artist category.png", "/icons/album.png", "/icons/playlist.png"};
+        
+        for (int i = 0; i < iconPaths.length; i++) {
+            JButton menuButton = new JButton(iconPaths[i]);
+            
+            menuButton.setBorderPainted(false);
+            menuButton.setContentAreaFilled(false);
+            menuButton.setFocusPainted(false);
+            menuButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            
+            menuButton.setHorizontalAlignment(SwingConstants.LEFT);
+            
+            menuButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+            menuButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+            
+            ImageIcon icon = loadAndScaleIcon(iconPaths[i], 24, 24);
+            menuButton.setIcon(icon);
+            menuButton.setIconTextGap(15);
+            
+            if(i > 0) {
+                leftSidebarPanel.add(menuButton);
+            }
+            
+            final String iconPathName = iconPaths[i];
+            menuButton.addActionListener(e -> {
+                System.out.println("Menu diklik: " + iconPathName);
+            });
+        }
+        
+        add(leftSidebarPanel, BorderLayout.WEST);
     }
     
     private Song createSongFromMetadata(String filePath) {
@@ -224,6 +272,8 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         buttonPanel.add(prevButton);
         buttonPanel.add(playPauseButton);
         buttonPanel.add(nextButton);
+        
+        playerControlsPanel.add(buttonPanel, BorderLayout.CENTER);
 
 
         JPanel sliderPanel = new JPanel(new BorderLayout());
@@ -245,6 +295,8 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         sliderPanel.add(songSlider, BorderLayout.CENTER);
         sliderPanel.add(timeStartLabel, BorderLayout.WEST);
         sliderPanel.add(timeEndLabel, BorderLayout.EAST);
+        
+        playerControlsPanel.add(sliderPanel, BorderLayout.NORTH);
 
         
         JPanel volumePanel = new JPanel(new FlowLayout()); 
