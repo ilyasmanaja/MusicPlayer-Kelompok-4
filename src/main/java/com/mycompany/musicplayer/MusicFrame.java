@@ -40,18 +40,19 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
     private JSlider songSlider;
     private JLabel timeStartLabel;
     private JLabel timeEndLabel;
+    private JSlider volumeSlider;
     
     private ImageIcon iconPlay;
     private ImageIcon iconPause;
     private ImageIcon iconNext;
     private ImageIcon iconPrev;
+    private ImageIcon iconVolume;
     
     
     private MusicPlayerEngine playerEngine;
     private List<Song> songList;
 
     public MusicFrame() {
-        // --- Setup Jendela Utama ---
         setTitle("Music Player");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1200, 800); 
@@ -98,6 +99,7 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         iconPause = loadAndScaleIcon("/icons/pause.png", iconSize, iconSize);
         iconNext = loadAndScaleIcon("/icons/next.png", iconSize, iconSize);
         iconPrev = loadAndScaleIcon("/icons/prev.png", iconSize, iconSize);
+        iconVolume = loadAndScaleIcon("/icons/volume.png", iconSize, iconSize);
     }
     
     private Song createSongFromMetadata(String filePath) {
@@ -135,11 +137,8 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
     private void initSongListPanel() {
         songListPanel = new JPanel(new BorderLayout());
 
-        // Tentukan nama kolom untuk tabel
         String[] columnNames = {"Judul", "Artis", "Durasi"};
 
-        // Buat table model, tapi set 0 baris awal
-        // Kita juga buat agar tabelnya tidak bisa diedit
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -185,8 +184,9 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         buttonPanel.add(prevButton);
         buttonPanel.add(playPauseButton);
         buttonPanel.add(nextButton);
+        
+        playerControlsPanel.add(buttonPanel, BorderLayout.CENTER);
 
-        // --- Panel untuk Slider (Tengah) ---
         JPanel sliderPanel = new JPanel(new BorderLayout());
         songSlider = new JSlider();
         songSlider.setValue(0);
@@ -201,30 +201,52 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
             }
         });
         
-        // Tambahkan label durasi (nanti)
         timeStartLabel = new JLabel("0:00");
         timeEndLabel = new JLabel("0:00");
         
         sliderPanel.add(songSlider, BorderLayout.CENTER);
         sliderPanel.add(timeStartLabel, BorderLayout.WEST);
         sliderPanel.add(timeEndLabel, BorderLayout.EAST);
+        playerControlsPanel.add(sliderPanel, BorderLayout.NORTH);
         
-        // --- Tambahkan panel-panel kecil ke panel kontrol utama ---
-        playerControlsPanel.add(buttonPanel, BorderLayout.CENTER);
-        playerControlsPanel.add(sliderPanel, BorderLayout.NORTH); // Slider di atas tombol
+        JPanel volumePanel = new JPanel (new FlowLayout());
+        volumePanel.setPreferredSize(new Dimension(150, 90));
         
-        // Tambahkan panel kontrol ke frame
-        add(playerControlsPanel, BorderLayout.SOUTH);
+        JLabel speakerIcon = new JLabel(iconVolume);
+        volumePanel.add(speakerIcon);
+        
+        volumeSlider = new JSlider(0, 100);
+        volumeSlider.setValue(75);
+        volumeSlider.setPreferredSize(new Dimension(100, 20));
+        
+        volumeSlider.addChangeListener(e -> {
+            int sliderValue = volumeSlider.getValue();
+            double volume = sliderValue / 100.0;
+            playerEngine.setVolume(volume);
+        });
+        
+        volumePanel.add(volumeSlider);
+        
+        playerControlsPanel.add(volumePanel, BorderLayout.EAST);
 
-        // --- TAMBAHKAN FUNGSI (ACTION LISTENER) ---
+        playerControlsPanel.add(buttonPanel, BorderLayout.CENTER);
+        playerControlsPanel.add(sliderPanel, BorderLayout.NORTH); 
+
+        add(playerControlsPanel, BorderLayout.SOUTH);
+        
+        nextButton.addActionListener(e -> {
+            playNext();
+        });
+        
+        prevButton.addActionListener(e -> {
+            playPrevious();
+        });
+
         playPauseButton.addActionListener(e -> {
-            togglePlayPause(); // Panggil method helper
+            togglePlayPause();
         });
     }
 
-    /**
-     * Mengisi tabel dengan data lagu bohongan (dummy).
-     */
     private void loadDummySongs() {
         String path1 = "D:\\Music\\SoundHelix-Song-1.mp3";
         String path2 = "D:\\Music\\Multo.mp3";
@@ -254,40 +276,62 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         }
     }
 
-    /**
-     * Logika untuk tombol Play/Pause.
-     */
     private void togglePlayPause() {
         if (playerEngine.isPlaying()) {
-            // --- Jika sedang main, PAUSE ---
             playerEngine.pause();
             playPauseButton.setIcon(iconPlay);
         } else {
-            // --- Jika sedang pause atau stop, PLAY ---
-            
-            // 1. Dapatkan lagu yang dipilih dari tabel
             int selectedRow = songTable.getSelectedRow();
-            
-            // Cek apakah ada lagu yang dipilih
+
             if (selectedRow == -1) {
-                // Jika tidak ada, mainkan lagu pertama di daftar
                 selectedRow = 0;
-                songTable.setRowSelectionInterval(0, 0);
             }
-
-            // 2. Ambil objek Song dari daftar kita
-            Song songToPlay = songList.get(selectedRow);
-
-            // 3. Cek apakah lagu ini lagu yang baru
-            //    atau hanya melanjutkan lagu yang di-pause
-            if (songToPlay != playerEngine.getCurrentSong()) {
-                playerEngine.loadSong(songToPlay);
-            }
-
-            // 4. Putar lagunya!
-            playerEngine.play();
-            playPauseButton.setIcon(iconPause); // Ubah ikon ke 'Pause'
+            
+            playSongAtIndex(selectedRow);
         }
+    }
+    
+    private void playSongAtIndex (int index) {
+        if (index < 0 || index >= songList.size()) {
+            return;
+        }
+        
+        songTable.setRowSelectionInterval(index, index);
+        
+        Song songToPlay = songList.get(index);
+        
+        playerEngine.loadSong(songToPlay);
+        playerEngine.play();
+        
+        playPauseButton.setIcon(iconPause);
+    }
+    
+    private void playNext() {
+        int currentRow = songTable.getSelectedRow();
+        if (currentRow == -1) {
+            currentRow = 0;
+        }
+        
+        int nextRow = currentRow + 1;
+        if (nextRow >= songList.size()) {
+            nextRow = 0;
+        }
+        
+        playSongAtIndex(nextRow);
+    }
+    
+    private void playPrevious() {
+        int currentRow = songTable.getSelectedRow();
+        if (currentRow == -1) {
+            currentRow = 0;
+        }
+        
+        int prevRow = currentRow - 1;
+        if (prevRow < 0) {
+            prevRow = 0;
+        }
+        
+        playSongAtIndex(prevRow);
     }
     
     @Override
@@ -307,6 +351,8 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
                    songSlider.setValue((int) currentSeconds);
                }
                timeStartLabel.setText(formatDuration((long) currentSeconds));
+           }    else if ("songFinished".equals(evt.getPropertyName())) {
+               playNext();
            }
        });
     }

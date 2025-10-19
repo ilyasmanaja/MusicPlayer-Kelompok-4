@@ -19,6 +19,7 @@ public class MusicPlayerEngine {
     private Song currentSong;
     private boolean isPlaying = false;
     private final PropertyChangeSupport support = new PropertyChangeSupport(this);
+    private double currentVolume = 0.75;
     
     public void loadSong(Song song) {
         if(mediaPlayer != null) {
@@ -35,12 +36,13 @@ public class MusicPlayerEngine {
             
             mediaPlayer = new MediaPlayer(media);
             
+            mediaPlayer.setVolume(currentVolume);
+            
             System.out.println(">>> javaFX berhasil di load: " + song.getTitle());
             
             mediaPlayer.setOnEndOfMedia(() -> {
                 isPlaying = false;
-                System.out.println("Lagu Selesai: " + currentSong.getTitle());
-                mediaPlayer.getError().printStackTrace();
+                support.firePropertyChange("songFinished", null, null);
             });
             
             mediaPlayer.setOnReady(() -> {
@@ -109,4 +111,12 @@ public class MusicPlayerEngine {
             mediaPlayer.seek(Duration.seconds(seconds));
         }
     }
+    
+    public void setVolume(double volume) {
+        this.currentVolume = volume;
+        
+        if (mediaPlayer != null) {
+            mediaPlayer.setVolume(this.currentVolume);
+        }
+    } 
 }

@@ -53,11 +53,7 @@ public class Song {
     public String getFileName() {
         return new File(filePath).getName();
     }
-    
-    /**
-     *
-     * @return
-     */
+
     @Override
     public String toString() {
         return "Song{" +

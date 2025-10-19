@@ -30,11 +30,7 @@ public class MusicPlayer {
         
         new JFXPanel(); 
 
-        // --- Menjalankan Jendela Utama (MainFrame) ---
-        
-        // Menjalankan UI di thread khusus (praktik terbaik Swing)
         SwingUtilities.invokeLater(() -> {
-            // Buat instance dari MainFrame kita dan tampilkan
             MusicFrame mainFrame = new MusicFrame();
             mainFrame.setVisible(true);
         });
