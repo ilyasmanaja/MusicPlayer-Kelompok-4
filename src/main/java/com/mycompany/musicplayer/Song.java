@@ -5,6 +5,7 @@
 package com.mycompany.musicplayer;
 
 import java.io.File;
+import javax.swing.ImageIcon;
 /**
  *
  * @author Raihan
@@ -15,13 +16,15 @@ public class Song {
     private String album;
     private long durationInSecond;
     private String filePath;
+    private ImageIcon albumArt;
 
-    public Song(String title, String artist, String album, long durationInSecond, String filePath) {
+    public Song(String title, String artist, String album, long durationInSecond, String filePath, ImageIcon albumArt) {
         this.title = title;
         this.artist = artist;
         this.album = album;
         this.durationInSecond = durationInSecond;
         this.filePath = filePath;
+        this.albumArt = albumArt;
     }
 
     public String getTitle() {
@@ -42,6 +45,10 @@ public class Song {
 
     public String getFilePath() {
         return filePath;
+    }
+
+    public ImageIcon getAlbumArt() {
+        return albumArt;
     }
     
     public String getFormattedDuration() {
