@@ -192,7 +192,7 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         
         nowPlayingArtLabel = new JLabel(iconDefaultAlbum);
         nowPlayingArtLabel.setPreferredSize(new Dimension (64, 64));
-        nowPlayingArtLabel.add(nowPlayingArtLabel, BorderLayout.WEST);
+        nowPlayingPanel.add(nowPlayingArtLabel, BorderLayout.WEST);
         
         JPanel textPanel = new JPanel();
         textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
