@@ -224,7 +224,6 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         buttonPanel.add(prevButton);
         buttonPanel.add(playPauseButton);
         buttonPanel.add(nextButton);
-        playerControlsPanel.add(buttonPanel, BorderLayout.CENTER);
 
 
         JPanel sliderPanel = new JPanel(new BorderLayout());
@@ -246,7 +245,6 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         sliderPanel.add(songSlider, BorderLayout.CENTER);
         sliderPanel.add(timeStartLabel, BorderLayout.WEST);
         sliderPanel.add(timeEndLabel, BorderLayout.EAST);
-        playerControlsPanel.add(sliderPanel, BorderLayout.NORTH);
 
         
         JPanel volumePanel = new JPanel(new FlowLayout()); 

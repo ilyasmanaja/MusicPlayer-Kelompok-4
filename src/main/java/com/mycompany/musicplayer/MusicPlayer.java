@@ -28,8 +28,6 @@ public class MusicPlayer {
         
         new JFXPanel();
         
-        new JFXPanel(); 
-
         SwingUtilities.invokeLater(() -> {
             MusicFrame mainFrame = new MusicFrame();
             mainFrame.setVisible(true);
