@@ -33,7 +33,7 @@ public class MusicPlayerEngine {
             
             Media media = new Media(uri);
             
-            MediaPlayer mediaPlayer = new MediaPlayer(media);
+            mediaPlayer = new MediaPlayer(media);
             
             System.out.println(">>> javaFX berhasil di load: " + song.getTitle());
             
