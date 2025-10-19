@@ -7,27 +7,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.awt.Image;
 import javax.swing.ImageIcon;
-
-// IMPORT UNTUK JAUDIOTAGGER (METADATA)
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.tag.FieldKey;
 import org.jaudiotagger.tag.Tag;
-import org.jaudiotagger.tag.Artwork; // <-- INI IMPORT YANG BENAR
-
-// IMPORT UNTUK IMAGE PROCESSING (ALBUM ART)
+import org.jaudiotagger.tag.images.Artwork; // <-- INI IMPORT YANG BENAR
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import javax.imageio.ImageIO;
-
-// IMPORT UNTUK LISTENER (SLIDER, DLL)
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-// IMPORT KELAS KITA
 import com.mycompany.musicplayer.Song; 
 import com.mycompany.musicplayer.MusicPlayerEngine;
 
@@ -48,20 +41,22 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
     private JLabel timeStartLabel;
     private JLabel timeEndLabel;
     private JSlider volumeSlider;
+    private JLabel nowPlayingArtLabel;
+    private JLabel nowPlayingTitleLabel;
+    private JLabel nowPlayingArtistLabel;
     
     private ImageIcon iconPlay;
     private ImageIcon iconPause;
     private ImageIcon iconNext;
     private ImageIcon iconPrev;
     private ImageIcon iconVolume;
-    private ImageIcon iconDefaultAlbum; // <-- Variabel baru
+    private ImageIcon iconDefaultAlbum;
     
     
     private MusicPlayerEngine playerEngine;
     private List<Song> songList;
 
     public MusicFrame() {
-        // --- Setup Jendela Utama ---
         setTitle("Music Player");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1200, 800); 
@@ -72,9 +67,8 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         playerEngine.addPropertyChangeListener(this);
         songList = new ArrayList<>();
         
-        loadAllIcons(); // <-- Memuat SEMUA ikon, termasuk default
+        loadAllIcons();
         
-        // --- Inisialisasi Panel ---
         topBarPanel = new JPanel();
         topBarPanel.setPreferredSize(new Dimension(getWidth(), 50));
         add(topBarPanel, BorderLayout.NORTH);
@@ -109,11 +103,9 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         iconPrev = loadAndScaleIcon("/icons/prev.png", iconSize, iconSize);
         iconVolume = loadAndScaleIcon("/icons/volume.png", iconSize, iconSize);
         
-        // --- BARIS BARU: Load ikon default (saya ganti namanya jadi 'music.png' sesuai file-mu) ---
         iconDefaultAlbum = loadAndScaleIcon("/icons/music.png", 64, 64);
     }
     
-    // --- METHOD YANG DIPERBARUI TOTAL ---
     private Song createSongFromMetadata(String filePath) {
         try {
             File file = new File(filePath);
@@ -121,7 +113,6 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
             
             Tag tag = audioFile.getTag();
             
-            // Perbaikan: Tipe data 'duration' harus 'long'
             long duration = audioFile.getAudioHeader().getTrackLength();
             
             String title = tag.getFirst(FieldKey.TITLE);
@@ -138,28 +129,23 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
                 album = "Unknown Album";
             }
             
-            // --- BAGIAN BARU: Membaca Gambar Album ---
-            Artwork artwork = tag.getFirstArtwork(); // <-- Menggunakan import yang benar
-            ImageIcon albumArtIcon = iconDefaultAlbum; // Set default dulu
+            Artwork artwork = tag.getFirstArtwork(); 
+            ImageIcon albumArtIcon = iconDefaultAlbum; 
             
             if (artwork != null) {
                 try {
                     byte[] imageData = artwork.getBinaryData();
                     BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageData));
                     
-                    // Scale gambar agar pas di UI (64x64)
                     Image scaledImg = img.getScaledInstance(64, 64, Image.SCALE_SMOOTH);
                     albumArtIcon = new ImageIcon(scaledImg);
                 } catch (Exception e) {
-                    // Biarkan, albumArtIcon tetap pakai default
                     System.err.println("Gagal load album art untuk: " + title);
                 }
             }
-            // --- SELESAI BAGIAN BARU ---
 
             System.out.println(">>> jaudiotagger BERHASIL baca: " + title);
             
-            // --- PERBAIKAN: Memanggil constructor Song yang baru ---
             return new Song(title, artist, album, duration, filePath, albumArtIcon);
             
         }   catch (Exception e) {
@@ -199,8 +185,30 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
     private void initPlayerControlsPanel() {
         playerControlsPanel = new JPanel(new BorderLayout()); 
         playerControlsPanel.setPreferredSize(new Dimension(getWidth(), 90));
+        
+        JPanel nowPlayingPanel = new JPanel(new BorderLayout(10, 0));
+        nowPlayingPanel.setPreferredSize(new Dimension(250, 90));
+        nowPlayingPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        
+        nowPlayingArtLabel = new JLabel(iconDefaultAlbum);
+        nowPlayingArtLabel.setPreferredSize(new Dimension (64, 64));
+        nowPlayingArtLabel.add(nowPlayingArtLabel, BorderLayout.WEST);
+        
+        JPanel textPanel = new JPanel();
+        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
+        
+        nowPlayingTitleLabel = new JLabel("Pilih Lagu");
+        nowPlayingTitleLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        nowPlayingArtistLabel = new JLabel(" ");
+        nowPlayingArtistLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        
+        textPanel.add(nowPlayingTitleLabel);
+        textPanel.add(nowPlayingArtistLabel);
+        
+        nowPlayingPanel.add(textPanel, BorderLayout.CENTER);
+        
+        playerControlsPanel.add(nowPlayingPanel, BorderLayout.WEST);
 
-        // --- Bagian Button Panel (CENTER) ---
         JPanel buttonPanel = new JPanel(); 
         JButton prevButton = new JButton(iconPrev);
         playPauseButton = new JButton(iconPlay); 
@@ -219,7 +227,6 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         playerControlsPanel.add(buttonPanel, BorderLayout.CENTER);
 
 
-        // --- Bagian Slider Lagu (NORTH) ---
         JPanel sliderPanel = new JPanel(new BorderLayout());
         songSlider = new JSlider();
         songSlider.setValue(0);
@@ -242,7 +249,6 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         playerControlsPanel.add(sliderPanel, BorderLayout.NORTH);
 
         
-        // --- Bagian Volume Panel (EAST) ---
         JPanel volumePanel = new JPanel(new FlowLayout()); 
         volumePanel.setPreferredSize(new Dimension(150, 90)); 
         
@@ -262,11 +268,9 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         volumePanel.add(volumeSlider);
         playerControlsPanel.add(volumePanel, BorderLayout.EAST);
         
-
-        // --- Tambahkan panel kontrol utama ke frame ---
+        
         add(playerControlsPanel, BorderLayout.SOUTH);
 
-        // --- Action Listeners (Tombol) ---
         nextButton.addActionListener(e -> { playNext(); });
         prevButton.addActionListener(e -> { playPrevious(); });
         playPauseButton.addActionListener(e -> { togglePlayPause(); });
@@ -310,6 +314,10 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         playerEngine.loadSong(songToPlay);
         playerEngine.play();
         playPauseButton.setIcon(iconPause);
+        
+        nowPlayingArtLabel.setIcon(songToPlay.getAlbumArt());
+        nowPlayingTitleLabel.setText(songToPlay.getTitle());
+        nowPlayingArtistLabel.setText(songToPlay.getArtist());
     }
     
     private void togglePlayPause() {
@@ -332,7 +340,7 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         }
         int nextRow = currentRow + 1;
         if (nextRow >= songList.size()) {
-            nextRow = 0; // Kembali ke lagu pertama
+            nextRow = 0;
         }
         playSongAtIndex(nextRow);
     }
@@ -343,12 +351,9 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
             currentRow = 0;
         }
         
-        // --- PERBAIKAN BUG DI SINI ---
-        // Kode lamamu: if (prevRow < 0) { prevRow = 0; }
-        // Seharusnya:
         int prevRow = currentRow - 1;
         if (prevRow < 0) {
-            prevRow = songList.size() - 1; // Pindah ke lagu terakhir
+            prevRow = songList.size() - 1;
         }
         
         playSongAtIndex(prevRow);
