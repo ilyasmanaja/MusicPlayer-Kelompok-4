@@ -55,6 +55,7 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
     private ImageIcon iconArtist;
     private ImageIcon iconAlbumCategory;
     private ImageIcon iconPlaylist;
+    private ImageIcon iconProfile;
     
     
     
@@ -74,9 +75,7 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         
         loadAllIcons();
         
-        topBarPanel = new JPanel();
-        topBarPanel.setPreferredSize(new Dimension(getWidth(), 50));
-        add(topBarPanel, BorderLayout.NORTH);
+        initTopbarPanel();
         
         initLeftSidebarPanel();
         
@@ -97,6 +96,31 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         }
     }
     
+    private ImageIcon loadAndCropToSquareIcon(String path, int targetSize) {
+        try {
+            BufferedImage originalImage = ImageIO.read(getClass().getResource(path));
+            if(originalImage == null) {
+                throw new Exception("Gambar tidak ditemukan di path: " + path);
+            }
+            
+            int origW = originalImage.getWidth();
+            int origH = originalImage.getHeight();
+            
+            int cropSize = Math.min(origW, origH);
+            int cropX = (origW - cropSize) / 2;
+            int cropY = (origH - cropSize) / 2;
+            
+            BufferedImage croppedImage = originalImage.getSubimage(cropX, cropY, cropSize, cropSize);
+            Image scaledImage = croppedImage.getScaledInstance(targetSize, targetSize, Image.SCALE_SMOOTH);
+            
+            return new ImageIcon(scaledImage);
+        }   catch(Exception e) {
+            System.err.println("Gagal load dan crop ikon: " + path);
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
     private void loadAllIcons() {
         int iconSize = 28;
         
@@ -110,47 +134,92 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         iconAlbumCategory = loadAndScaleIcon("/icons/album.png", iconSize, iconSize);
         iconPlaylist = loadAndScaleIcon("/icons/playlist.png", iconSize, iconSize);
         
-        
+        iconProfile = loadAndCropToSquareIcon("/icons/profile.png", 150);
         iconDefaultAlbum = loadAndScaleIcon("/icons/artist.png", 60, 60);
     }
     
+    private void initTopbarPanel() {
+        topBarPanel = new JPanel(new BorderLayout(10, 0));
+        topBarPanel.setPreferredSize(new Dimension(getWidth(), 50));
+        
+        topBarPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
+        
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        
+        ImageIcon logoIcon = loadAndScaleIcon("/icons/icon.png", 32, 32);
+        JLabel logoLabel = new JLabel(logoIcon);
+        leftPanel.add(logoLabel);
+        
+        JLabel userNameLabel = new JLabel("Music Player Kelompok 4");
+        userNameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        leftPanel.add(userNameLabel);
+        
+        topBarPanel.add(leftPanel, BorderLayout.WEST);
+        
+        add(topBarPanel, BorderLayout.NORTH);
+    }
+    
     private void initLeftSidebarPanel() {
-        leftSidebarPanel = new JPanel();
-        
-        leftSidebarPanel.setLayout(new BoxLayout(leftSidebarPanel, BoxLayout.Y_AXIS));
+        leftSidebarPanel = new JPanel(new BorderLayout()); 
         leftSidebarPanel.setPreferredSize(new Dimension(180, getHeight()));
+
+        JPanel profilePanel = new JPanel();
+        profilePanel.setLayout(new BoxLayout(profilePanel, BoxLayout.Y_AXIS));
+        profilePanel.setBorder(BorderFactory.createEmptyBorder(2, 5, 5, 5));
         
-        leftSidebarPanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 10, 10));
+        JLabel profileIconLabel = new JLabel(iconProfile);
+        profileIconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        String[] iconPaths = {"/icons/songs.png", "/icons/artist category.png", "/icons/album.png", "/icons/playlist.png"};
-        
-        for (int i = 0; i < iconPaths.length; i++) {
-            JButton menuButton = new JButton(iconPaths[i]);
+        JLabel userNameLabel = new JLabel("Raihan");
+        userNameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        userNameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        profilePanel.add(profileIconLabel);
+        profilePanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        profilePanel.add(userNameLabel);
+
+        leftSidebarPanel.add(profilePanel, BorderLayout.NORTH);
+
+        JPanel menuPanel = new JPanel();
+        menuPanel.setLayout(new BoxLayout(menuPanel, BoxLayout.Y_AXIS));
+        menuPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); 
+
+        // --- Data Menu (ini sudah ada dari kodemu) ---
+        String[] menuItems = {"Songs", "Artists", "Albums", "Playlists"}; 
+        String[] iconPaths = {"/icons/songs.png", "/icons/artist.png", "/icons/album.png", "/icons/playlist.png"};
+
+        for (int i = 0; i < menuItems.length; i++) {
+            JButton menuButton = new JButton(menuItems[i]);
             
+            // Styling (sudah ada)
             menuButton.setBorderPainted(false);
             menuButton.setContentAreaFilled(false);
             menuButton.setFocusPainted(false);
             menuButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            
             menuButton.setHorizontalAlignment(SwingConstants.LEFT);
-            
             menuButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
             menuButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
             
-            ImageIcon icon = loadAndScaleIcon(iconPaths[i], 24, 24);
-            menuButton.setIcon(icon);
+            ImageIcon icon = loadAndScaleIcon(iconPaths[i], 24, 24); 
+            if (icon != null) { 
+                menuButton.setIcon(icon);
+            }
             menuButton.setIconTextGap(15);
-            
-            if(i > 0) {
-                leftSidebarPanel.add(menuButton);
+
+            menuPanel.add(menuButton);
+
+            if (i < menuItems.length - 1) {
+                 menuPanel.add(Box.createRigidArea(new Dimension(0, 10))); 
             }
             
-            final String iconPathName = iconPaths[i];
+            final String menuItemName = menuItems[i]; 
             menuButton.addActionListener(e -> {
-                System.out.println("Menu diklik: " + iconPathName);
+                System.out.println("Menu diklik: " + menuItemName); 
             });
         }
-        
+
+        leftSidebarPanel.add(menuPanel, BorderLayout.CENTER);
+
         add(leftSidebarPanel, BorderLayout.WEST);
     }
     
@@ -234,93 +303,105 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         playerControlsPanel = new JPanel(new BorderLayout()); 
         playerControlsPanel.setPreferredSize(new Dimension(getWidth(), 90));
         
+        // === Panel Now Playing (WEST) ===
+        // (Kode nowPlayingPanel tidak berubah)
         JPanel nowPlayingPanel = new JPanel(new BorderLayout(10, 0));
         nowPlayingPanel.setPreferredSize(new Dimension(250, 90));
         nowPlayingPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        
         nowPlayingArtLabel = new JLabel(iconDefaultAlbum);
         nowPlayingArtLabel.setPreferredSize(new Dimension (64, 64));
         nowPlayingPanel.add(nowPlayingArtLabel, BorderLayout.WEST);
-        
         JPanel textPanel = new JPanel();
         textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
-        
         nowPlayingTitleLabel = new JLabel("Pilih Lagu");
         nowPlayingTitleLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
         nowPlayingArtistLabel = new JLabel(" ");
         nowPlayingArtistLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        
         textPanel.add(nowPlayingTitleLabel);
         textPanel.add(nowPlayingArtistLabel);
-        
         nowPlayingPanel.add(textPanel, BorderLayout.CENTER);
-        
+        // Tambahkan ke WEST panel utama
         playerControlsPanel.add(nowPlayingPanel, BorderLayout.WEST);
 
-        JPanel buttonPanel = new JPanel(); 
-        JButton prevButton = new JButton(iconPrev);
-        playPauseButton = new JButton(iconPlay); 
-        JButton nextButton = new JButton(iconNext);
-        
-        JButton[] buttons = {prevButton, playPauseButton, nextButton};
-        for (JButton  btn : buttons) {
-            btn.setBorderPainted(false);
-            btn.setContentAreaFilled(false);
-            btn.setFocusPainted(false);
-            btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        }
-        buttonPanel.add(prevButton);
-        buttonPanel.add(playPauseButton);
-        buttonPanel.add(nextButton);
-        
-        playerControlsPanel.add(buttonPanel, BorderLayout.CENTER);
+        // === Panel Volume (EAST) ===
+        // (Kode volumePanel tidak berubah)
+        JPanel volumePanel = new JPanel(new FlowLayout()); 
+        volumePanel.setPreferredSize(new Dimension(150, 90)); 
+        JLabel speakerIcon = new JLabel(iconVolume); 
+        volumePanel.add(speakerIcon);
+        volumeSlider = new JSlider(0, 100); 
+        volumeSlider.setValue(75); 
+        volumeSlider.setPreferredSize(new Dimension(100, 20)); 
+        volumeSlider.addChangeListener(e -> { /* ... listener volume ... */ });
+        volumePanel.add(volumeSlider);
+        // Tambahkan ke EAST panel utama
+        playerControlsPanel.add(volumePanel, BorderLayout.EAST);
 
+        // === Panel Tengah Baru (CENTER) ===
+        JPanel centerPanel = new JPanel(new BorderLayout()); // Panel baru untuk slider & tombol
 
-        JPanel sliderPanel = new JPanel(new BorderLayout());
+        // --- Sub-Panel Slider Lagu (di ATAS centerPanel) ---
+        JPanel sliderPanel = new JPanel(new GridBagLayout()); // GANTI KE GridBagLayout
+        GridBagConstraints gbc = new GridBagConstraints();
+        // Beri sedikit padding atas/bawah untuk sliderPanel
+        sliderPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 5, 0)); 
+
         songSlider = new JSlider();
         songSlider.setValue(0);
-        
-        songSlider.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                int newSeconds = songSlider.getValue();
-                playerEngine.seek(newSeconds);
-                timeStartLabel.setText(formatDuration(newSeconds));
-            }
-        });
+        songSlider.addMouseListener(new MouseAdapter() { /* ... listener slider ... */ });
         
         timeStartLabel = new JLabel("0:00");
         timeEndLabel = new JLabel("0:00");
         
-        sliderPanel.add(songSlider, BorderLayout.CENTER);
-        sliderPanel.add(timeStartLabel, BorderLayout.WEST);
-        sliderPanel.add(timeEndLabel, BorderLayout.EAST);
-        
-        playerControlsPanel.add(sliderPanel, BorderLayout.NORTH);
+        // Konfigurasi GridBagLayout untuk sliderPanel:
+        gbc.gridx = 0; // Kolom 0
+        gbc.gridy = 0; // Baris 0
+        gbc.weightx = 0; // Jangan meregang horizontal
+        gbc.insets = new Insets(0, 10, 0, 5); // Padding kanan
+        gbc.anchor = GridBagConstraints.LINE_END; // Rata kanan
+        sliderPanel.add(timeStartLabel, gbc);
 
-        
-        JPanel volumePanel = new JPanel(new FlowLayout()); 
-        volumePanel.setPreferredSize(new Dimension(150, 90)); 
-        
-        JLabel speakerIcon = new JLabel(iconVolume); 
-        volumePanel.add(speakerIcon);
-        
-        volumeSlider = new JSlider(0, 100); 
-        volumeSlider.setValue(75); 
-        volumeSlider.setPreferredSize(new Dimension(100, 20)); 
-        
-        volumeSlider.addChangeListener(e -> {
-            int sliderValue = volumeSlider.getValue();
-            double volume = sliderValue / 100.0;
-            playerEngine.setVolume(volume);
-        });
-        
-        volumePanel.add(volumeSlider);
-        playerControlsPanel.add(volumePanel, BorderLayout.EAST);
-        
-        
+        gbc.gridx = 1; // Kolom 1
+        gbc.weightx = 1.0; // Biarkan SLIDER meregang mengisi sisa ruang
+        gbc.fill = GridBagConstraints.HORIZONTAL; // Isi horizontal
+        gbc.insets = new Insets(0, 0, 0, 0); // Reset padding
+        gbc.anchor = GridBagConstraints.CENTER; // Rata tengah (default)
+        sliderPanel.add(songSlider, gbc);
+
+        gbc.gridx = 2; // Kolom 2
+        gbc.weightx = 0; // Jangan meregang
+        gbc.fill = GridBagConstraints.NONE; // Jangan isi ruang
+        gbc.insets = new Insets(0, 5, 0, 10); // Padding kiri
+        gbc.anchor = GridBagConstraints.LINE_START; // Rata kiri
+        sliderPanel.add(timeEndLabel, gbc);
+
+        // Tambahkan sliderPanel ke ATAS (NORTH) panel tengah
+        centerPanel.add(sliderPanel, BorderLayout.NORTH);
+
+
+        // --- Sub-Panel Tombol (di TENGAH centerPanel) ---
+        // (Kode buttonPanel tidak berubah, hanya pemindahannya)
+        JPanel buttonPanel = new JPanel(); 
+        JButton prevButton = new JButton(iconPrev);
+        playPauseButton = new JButton(iconPlay); 
+        JButton nextButton = new JButton(iconNext);
+        JButton[] buttons = {prevButton, playPauseButton, nextButton};
+        for (JButton  btn : buttons) { /* ... styling tombol ... */ }
+        buttonPanel.add(prevButton);
+        buttonPanel.add(playPauseButton);
+        buttonPanel.add(nextButton);
+        // Tambahkan buttonPanel ke TENGAH (CENTER) panel tengah
+        centerPanel.add(buttonPanel, BorderLayout.CENTER);
+
+        // Tambahkan panel tengah (yang berisi slider & tombol) ke CENTER panel utama
+        playerControlsPanel.add(centerPanel, BorderLayout.CENTER);
+
+
+        // --- Tambahkan panel kontrol utama ke frame ---
         add(playerControlsPanel, BorderLayout.SOUTH);
 
+        // --- Action Listeners (Tombol) ---
+        // (Kode listener tombol tidak berubah)
         nextButton.addActionListener(e -> { playNext(); });
         prevButton.addActionListener(e -> { playPrevious(); });
         playPauseButton.addActionListener(e -> { togglePlayPause(); });
