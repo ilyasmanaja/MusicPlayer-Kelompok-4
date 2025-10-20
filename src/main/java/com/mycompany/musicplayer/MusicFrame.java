@@ -20,6 +20,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.mycompany.musicplayer.Song; 
 import com.mycompany.musicplayer.MusicPlayerEngine;
@@ -81,7 +83,7 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         
         initSongListPanel();
         initPlayerControlsPanel();
-        loadDummySongs();
+//        loadDummySongs();
     }
     
     private ImageIcon loadAndScaleIcon(String path, int width, int height) {
@@ -141,20 +143,28 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
     private void initTopbarPanel() {
         topBarPanel = new JPanel(new BorderLayout(10, 0));
         topBarPanel.setPreferredSize(new Dimension(getWidth(), 50));
-        
         topBarPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
         
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        
         ImageIcon logoIcon = loadAndScaleIcon("/icons/icon.png", 32, 32);
         JLabel logoLabel = new JLabel(logoIcon);
         leftPanel.add(logoLabel);
-        
         JLabel userNameLabel = new JLabel("Music Player Kelompok 4");
         userNameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         leftPanel.add(userNameLabel);
-        
         topBarPanel.add(leftPanel, BorderLayout.WEST);
+        
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        
+        JButton addFilesButton = new JButton("Add Files");
+        
+        addFilesButton.addActionListener(e -> {
+            addSongsFromFileChooser();
+        });
+        
+        rightPanel.add(addFilesButton);
+        
+        topBarPanel.add(rightPanel, BorderLayout.EAST);
         
         add(topBarPanel, BorderLayout.NORTH);
     }
@@ -447,6 +457,51 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
                 song.getFormattedDuration()
             };
             tableModel.addRow(rowData);
+        }
+    }
+    
+    private void addSongsFromFileChooser() {
+        JFileChooser fileChooser = new JFileChooser();
+        
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("MP3 Files", "mp3");
+        fileChooser.setFileFilter(filter);
+        
+        fileChooser.setMultiSelectionEnabled(true);
+        
+        int result = fileChooser.showOpenDialog(this);
+        
+        
+        if(result == JFileChooser.APPROVE_OPTION) {
+            File[] selectedFile = fileChooser.getSelectedFiles();
+            
+            for(File file : selectedFile) {
+                String filePath = file.getAbsolutePath();
+                
+                boolean alreadyExists = false;
+                for (Song existingSong : songList) {
+                    if (existingSong.getFilePath().equals(filePath)) {
+                        alreadyExists = true;
+                        break;
+                    }
+                }
+                
+                if (!alreadyExists) {
+                    Song newSong = createSongFromMetadata(filePath);
+                    if(newSong != null) {
+                        songList.add(newSong);
+                        
+                        Object[] rowData = {
+                            newSong.getTitle(),
+                            newSong.getArtist(),
+                            newSong.getFormattedDuration()
+                        };
+                        tableModel.addRow(rowData);
+                    }
+                }   else {
+                    System.out.println("Lagu Sudah Ada: " + file.getName());
+                }
+            }
+
         }
     }
 
