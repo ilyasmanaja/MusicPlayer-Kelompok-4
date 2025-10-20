@@ -302,9 +302,7 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
     private void initPlayerControlsPanel() {
         playerControlsPanel = new JPanel(new BorderLayout()); 
         playerControlsPanel.setPreferredSize(new Dimension(getWidth(), 90));
-        
-        // === Panel Now Playing (WEST) ===
-        // (Kode nowPlayingPanel tidak berubah)
+
         JPanel nowPlayingPanel = new JPanel(new BorderLayout(10, 0));
         nowPlayingPanel.setPreferredSize(new Dimension(250, 90));
         nowPlayingPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
@@ -320,11 +318,9 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         textPanel.add(nowPlayingTitleLabel);
         textPanel.add(nowPlayingArtistLabel);
         nowPlayingPanel.add(textPanel, BorderLayout.CENTER);
-        // Tambahkan ke WEST panel utama
+
         playerControlsPanel.add(nowPlayingPanel, BorderLayout.WEST);
 
-        // === Panel Volume (EAST) ===
-        // (Kode volumePanel tidak berubah)
         JPanel volumePanel = new JPanel(new FlowLayout()); 
         volumePanel.setPreferredSize(new Dimension(150, 90)); 
         JLabel speakerIcon = new JLabel(iconVolume); 
@@ -332,79 +328,97 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         volumeSlider = new JSlider(0, 100); 
         volumeSlider.setValue(75); 
         volumeSlider.setPreferredSize(new Dimension(100, 20)); 
-        volumeSlider.addChangeListener(e -> { /* ... listener volume ... */ });
+        volumeSlider.addChangeListener(e -> {
+            System.out.println(">>> UI: volumeSlider Value Changed!"); 
+
+            int sliderValue = volumeSlider.getValue();
+            double volume = sliderValue / 100.0;
+            playerEngine.setVolume(volume);
+        });
         volumePanel.add(volumeSlider);
-        // Tambahkan ke EAST panel utama
+
         playerControlsPanel.add(volumePanel, BorderLayout.EAST);
 
         // === Panel Tengah Baru (CENTER) ===
-        JPanel centerPanel = new JPanel(new BorderLayout()); // Panel baru untuk slider & tombol
+        JPanel centerPanel = new JPanel(new BorderLayout()); 
 
-        // --- Sub-Panel Slider Lagu (di ATAS centerPanel) ---
-        JPanel sliderPanel = new JPanel(new GridBagLayout()); // GANTI KE GridBagLayout
+        JPanel sliderPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        // Beri sedikit padding atas/bawah untuk sliderPanel
+
         sliderPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 5, 0)); 
 
         songSlider = new JSlider();
         songSlider.setValue(0);
-        songSlider.addMouseListener(new MouseAdapter() { /* ... listener slider ... */ });
+        songSlider.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                System.out.println(">>> UI: songSlider Mouse Released!"); 
+                
+                int newSeconds = songSlider.getValue();
+                playerEngine.seek(newSeconds);
+                timeStartLabel.setText(formatDuration(newSeconds));
+            }
+        });
         
         timeStartLabel = new JLabel("0:00");
         timeEndLabel = new JLabel("0:00");
         
-        // Konfigurasi GridBagLayout untuk sliderPanel:
-        gbc.gridx = 0; // Kolom 0
-        gbc.gridy = 0; // Baris 0
-        gbc.weightx = 0; // Jangan meregang horizontal
-        gbc.insets = new Insets(0, 10, 0, 5); // Padding kanan
-        gbc.anchor = GridBagConstraints.LINE_END; // Rata kanan
+        gbc.gridx = 0; 
+        gbc.gridy = 0; 
+        gbc.weightx = 0;
+        gbc.insets = new Insets(0, 10, 0, 5);
+        gbc.anchor = GridBagConstraints.LINE_END; 
         sliderPanel.add(timeStartLabel, gbc);
 
-        gbc.gridx = 1; // Kolom 1
-        gbc.weightx = 1.0; // Biarkan SLIDER meregang mengisi sisa ruang
-        gbc.fill = GridBagConstraints.HORIZONTAL; // Isi horizontal
-        gbc.insets = new Insets(0, 0, 0, 0); // Reset padding
-        gbc.anchor = GridBagConstraints.CENTER; // Rata tengah (default)
+        gbc.gridx = 1; 
+        gbc.weightx = 1.0; 
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.anchor = GridBagConstraints.CENTER; 
         sliderPanel.add(songSlider, gbc);
 
-        gbc.gridx = 2; // Kolom 2
-        gbc.weightx = 0; // Jangan meregang
-        gbc.fill = GridBagConstraints.NONE; // Jangan isi ruang
-        gbc.insets = new Insets(0, 5, 0, 10); // Padding kiri
-        gbc.anchor = GridBagConstraints.LINE_START; // Rata kiri
+        gbc.gridx = 2; 
+        gbc.weightx = 0; 
+        gbc.fill = GridBagConstraints.NONE; 
+        gbc.insets = new Insets(0, 5, 0, 10); 
+        gbc.anchor = GridBagConstraints.LINE_START; 
         sliderPanel.add(timeEndLabel, gbc);
 
-        // Tambahkan sliderPanel ke ATAS (NORTH) panel tengah
         centerPanel.add(sliderPanel, BorderLayout.NORTH);
 
 
-        // --- Sub-Panel Tombol (di TENGAH centerPanel) ---
-        // (Kode buttonPanel tidak berubah, hanya pemindahannya)
         JPanel buttonPanel = new JPanel(); 
         JButton prevButton = new JButton(iconPrev);
         playPauseButton = new JButton(iconPlay); 
         JButton nextButton = new JButton(iconNext);
         JButton[] buttons = {prevButton, playPauseButton, nextButton};
-        for (JButton  btn : buttons) { /* ... styling tombol ... */ }
+        for (JButton  btn : buttons) {
+            btn.setBorderPainted(false);
+            btn.setContentAreaFilled(false);
+            btn.setFocusPainted(false);
+            btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        }
         buttonPanel.add(prevButton);
         buttonPanel.add(playPauseButton);
         buttonPanel.add(nextButton);
-        // Tambahkan buttonPanel ke TENGAH (CENTER) panel tengah
         centerPanel.add(buttonPanel, BorderLayout.CENTER);
 
-        // Tambahkan panel tengah (yang berisi slider & tombol) ke CENTER panel utama
         playerControlsPanel.add(centerPanel, BorderLayout.CENTER);
 
 
-        // --- Tambahkan panel kontrol utama ke frame ---
         add(playerControlsPanel, BorderLayout.SOUTH);
 
-        // --- Action Listeners (Tombol) ---
-        // (Kode listener tombol tidak berubah)
-        nextButton.addActionListener(e -> { playNext(); });
-        prevButton.addActionListener(e -> { playPrevious(); });
-        playPauseButton.addActionListener(e -> { togglePlayPause(); });
+        nextButton.addActionListener(e -> { 
+            playNext(); 
+        });
+        
+        prevButton.addActionListener(e -> { 
+            playPrevious();
+        });
+        
+        playPauseButton.addActionListener(e -> { 
+            togglePlayPause(); 
+        });
     }
 
     private void loadDummySongs() {
