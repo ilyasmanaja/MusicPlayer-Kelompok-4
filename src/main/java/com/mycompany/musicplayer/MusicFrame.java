@@ -22,6 +22,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.CardLayout;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableColumn;
 
 import com.mycompany.musicplayer.Song; 
 import com.mycompany.musicplayer.MusicPlayerEngine;
@@ -46,7 +49,13 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
     private JLabel nowPlayingArtLabel;
     private JLabel nowPlayingTitleLabel;
     private JLabel nowPlayingArtistLabel;
+    private JPanel mainContentPanel; // <-- Ganti nama dari songListPanel
+    private JPanel songsViewPanel;   // <-- Panel untuk tabel lagu (yang lama)
+    private JPanel artistsViewPanel; // <-- Panel baru untuk Artis
+    private JPanel albumsViewPanel;  // <-- Panel baru untuk Album
+    private JPanel playlistsViewPanel; // <-- Panel baru untuk Playlist
     
+
     private ImageIcon iconPlay;
     private ImageIcon iconPause;
     private ImageIcon iconNext;
@@ -58,11 +67,18 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
     private ImageIcon iconAlbumCategory;
     private ImageIcon iconPlaylist;
     private ImageIcon iconProfile;
+    private ImageIcon iconHeartEmpty;
+    private ImageIcon iconHeartFilled;
     
     
     
     private MusicPlayerEngine playerEngine;
     private List<Song> songList;
+    
+     private static final String SONGS_VIEW = "SongsView";
+     private static final String ARTISTS_VIEW = "ArtistsView";
+     private static final String ALBUMS_VIEW = "AlbumsView";
+     private static final String PLAYLISTS_VIEW = "PlaylistsView";
 
     public MusicFrame() {
         setTitle("Music Player");
@@ -81,7 +97,7 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         
         initLeftSidebarPanel();
         
-        initSongListPanel();
+        initMainContentPanel();
         initPlayerControlsPanel();
 //        loadDummySongs();
     }
@@ -135,6 +151,8 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         iconArtist = loadAndScaleIcon("/icons/artist category.png", iconSize, iconSize);
         iconAlbumCategory = loadAndScaleIcon("/icons/album.png", iconSize, iconSize);
         iconPlaylist = loadAndScaleIcon("/icons/playlist.png", iconSize, iconSize);
+        iconHeartEmpty = loadAndScaleIcon("/icons/heart_empty.png", 20, 20);
+        iconHeartFilled = loadAndScaleIcon("/icons/heart_filled.png", 20, 20);
         
         iconProfile = loadAndCropToSquareIcon("/icons/profile.png", 150);
         iconDefaultAlbum = loadAndScaleIcon("/icons/artist.png", 60, 60);
@@ -194,14 +212,12 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         menuPanel.setLayout(new BoxLayout(menuPanel, BoxLayout.Y_AXIS));
         menuPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); 
 
-        // --- Data Menu (ini sudah ada dari kodemu) ---
         String[] menuItems = {"Songs", "Artists", "Albums", "Playlists"}; 
         String[] iconPaths = {"/icons/songs.png", "/icons/artist.png", "/icons/album.png", "/icons/playlist.png"};
 
         for (int i = 0; i < menuItems.length; i++) {
             JButton menuButton = new JButton(menuItems[i]);
             
-            // Styling (sudah ada)
             menuButton.setBorderPainted(false);
             menuButton.setContentAreaFilled(false);
             menuButton.setFocusPainted(false);
@@ -221,12 +237,23 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
             if (i < menuItems.length - 1) {
                  menuPanel.add(Box.createRigidArea(new Dimension(0, 10))); 
             }
-            
+
             final String menuItemName = menuItems[i]; 
             menuButton.addActionListener(e -> {
-                System.out.println("Menu diklik: " + menuItemName); 
+                CardLayout cl = (CardLayout) (mainContentPanel.getLayout());
+                
+                String panelToShow = SONGS_VIEW;
+                if (menuItemName.equals("Artists")) {
+                    panelToShow = ARTISTS_VIEW;
+                } else if (menuItemName.equals("Albums")) {
+                    panelToShow = ALBUMS_VIEW;
+                } else if (menuItemName.equals("Playlists")) {
+                    panelToShow = PLAYLISTS_VIEW;
+                } 
+                
+                cl.show(mainContentPanel, panelToShow);
             });
-        }
+        } 
 
         leftSidebarPanel.add(menuPanel, BorderLayout.CENTER);
 
@@ -282,31 +309,48 @@ public class MusicFrame extends JFrame implements PropertyChangeListener {
         }
     }
     
-    private void initSongListPanel() {
-        songListPanel = new JPanel(new BorderLayout());
+    private void initMainContentPanel() {
+        // 1. Buat panel induk dengan CardLayout
+        mainContentPanel = new JPanel(new CardLayout());
+
+        // 2. Buat Panel untuk View "Songs" (Isinya kode tabel lama)
+        songsViewPanel = new JPanel(new BorderLayout()); // Panel ini pakai BorderLayout
         String[] columnNames = {"Judul", "Artis", "Durasi"};
-
-        tableModel = new DefaultTableModel(columnNames, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; 
-            }
-        };
-
+        tableModel = new DefaultTableModel(columnNames, 0) { /* ... isCellEditable ... */ };
         songTable = new JTable(tableModel);
-        
-        songTable.setRowHeight(30); 
+        // ... (Semua kode styling JTable: setRowHeight, setFont, dll.) ...
+        songTable.setRowHeight(30);
         songTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        songTable.setShowGrid(false); 
+        songTable.setShowGrid(false);
         songTable.setIntercellSpacing(new Dimension(0, 0));
-        songTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); 
-
+        songTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane scrollPane = new JScrollPane(songTable);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder()); 
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        songsViewPanel.add(scrollPane, BorderLayout.CENTER);
+        // Tambahkan songsViewPanel ke CardLayout dengan NAMA
+        mainContentPanel.add(songsViewPanel, SONGS_VIEW);
 
-        songListPanel.add(scrollPane, BorderLayout.CENTER);
-        
-        add(songListPanel, BorderLayout.CENTER);
+        // 3. Buat Panel Placeholder untuk View "Artists"
+        artistsViewPanel = new JPanel();
+        artistsViewPanel.add(new JLabel("Tampilan Daftar Artis (Belum Dibuat)")); // Placeholder
+        // Tambahkan artistsViewPanel ke CardLayout dengan NAMA
+        mainContentPanel.add(artistsViewPanel, ARTISTS_VIEW);
+
+        // 4. Buat Panel Placeholder untuk View "Albums"
+        albumsViewPanel = new JPanel();
+        albumsViewPanel.add(new JLabel("Tampilan Daftar Album (Belum Dibuat)")); // Placeholder
+        // Tambahkan albumsViewPanel ke CardLayout dengan NAMA
+        mainContentPanel.add(albumsViewPanel, ALBUMS_VIEW);
+
+        // 5. Buat Panel Placeholder untuk View "Playlists"
+        playlistsViewPanel = new JPanel();
+        playlistsViewPanel.add(new JLabel("Tampilan Daftar Playlist (Belum Dibuat)")); // Placeholder
+        // Tambahkan playlistsViewPanel ke CardLayout dengan NAMA
+        mainContentPanel.add(playlistsViewPanel, PLAYLISTS_VIEW);
+
+
+        // 6. Tambahkan panel induk (mainContentPanel) ke frame
+        add(mainContentPanel, BorderLayout.CENTER);
     }
 
     private void initPlayerControlsPanel() {

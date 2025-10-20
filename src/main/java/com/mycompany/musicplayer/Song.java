@@ -17,6 +17,7 @@ public class Song {
     private long durationInSecond;
     private String filePath;
     private ImageIcon albumArt;
+    private boolean liked = false;
 
     public Song(String title, String artist, String album, long durationInSecond, String filePath, ImageIcon albumArt) {
         this.title = title;
@@ -60,6 +61,16 @@ public class Song {
     public String getFileName() {
         return new File(filePath).getName();
     }
+
+    public boolean isLiked() {
+        return liked;
+    }
+
+    public void setLiked(boolean liked) {
+        this.liked = liked;
+    }
+    
+    
 
     @Override
     public String toString() {

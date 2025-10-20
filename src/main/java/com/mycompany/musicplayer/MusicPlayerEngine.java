@@ -72,7 +72,7 @@ public class MusicPlayerEngine {
             mediaPlayer.play();
             isPlaying = true;
         }   else {
-            System.err.println("Mesil Play: Gagal, mediaPlayer = null");
+            System.err.println("Mesin Play: Gagal, mediaPlayer = null");
         }
     }
     
